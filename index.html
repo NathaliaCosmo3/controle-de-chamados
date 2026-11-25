@@ -39,7 +39,7 @@ button:disabled { opacity: .52; cursor: default; }
 button.secondary { border-color: var(--line); background: #fff; color: var(--orange-dark); }
 button.secondary:hover:not(:disabled) { background: var(--peach); }
 :focus-visible { outline: 3px solid #c96629; outline-offset: 2px; }
-.summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
+.summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
 .summary article,.panel,dialog { background: #fffdfa; border: 1px solid var(--line); border-radius: 13px; }
 .summary article { position: relative; padding: 16px; }
 .summary span { display: block; font-weight: 700; }
@@ -61,6 +61,7 @@ td:first-child { min-width: 180px; }
 td small { display: block; color: var(--quiet); margin-top: 3px; }
 .tag { display: inline-block; border-radius: 99px; padding: 4px 9px; background: var(--peach); color: #753014; font-weight: 650; }
 .tag[data-value="Alta"],.tag[data-value="Aberto"] { background: #f9d8cd; }
+.tag[data-value="Em espera"] { background: #f7e7c9; color: #67400f; }
 .tag[data-value="Resolvido"] { background: #efe4df; color: #594137; }
 .actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .actions button { font-size: .8rem; padding: 4px 8px; }
@@ -80,7 +81,7 @@ dialog label { display: grid; gap: 4px; font-weight: 650; }
   .brand { padding: 0 0 6px; }
   nav { display: flex; flex-wrap: wrap; }
   nav a { padding: 6px 8px; }
-  .summary { gap: 6px; }
+  .summary { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
   .summary article { padding: 8px; font-size: .8rem; }
 }
 @media (max-width: 560px) {
@@ -114,7 +115,8 @@ dialog label { display: grid; gap: 4px; font-weight: 650; }
   <section class="summary" aria-label="Resumo dos chamados">
     <article><span>Abertos</span><strong id="metric-0">0</strong><i aria-hidden="true">▣</i></article>
     <article><span>Em atendimento</span><strong id="metric-1">0</strong><i aria-hidden="true">◷</i></article>
-    <article><span>Resolvidos</span><strong id="metric-2">0</strong><i aria-hidden="true">✓</i></article>
+    <article><span>Em espera</span><strong id="metric-2">0</strong><i aria-hidden="true">Ⅱ</i></article>
+    <article><span>Resolvidos</span><strong id="metric-3">0</strong><i aria-hidden="true">✓</i></article>
   </section>
   <section class="panel" aria-labelledby="recent-title">
     <div class="toolbar">
@@ -122,7 +124,7 @@ dialog label { display: grid; gap: 4px; font-weight: 650; }
       <input id="search" type="search" aria-label="Buscar chamado" placeholder="Buscar chamado…">
       <select id="status" aria-label="Filtrar por status">
         <option value="Todos">Todos os status</option>
-        <option>Aberto</option><option>Em atendimento</option><option>Resolvido</option>
+        <option>Aberto</option><option>Em atendimento</option><option>Em espera</option><option>Resolvido</option>
       </select>
     </div>
     <div class="table" tabindex="0" role="region" aria-label="Lista de chamados">
@@ -161,7 +163,13 @@ dialog label { display: grid; gap: 4px; font-weight: 650; }
 const by=id=>document.getElementById(id); const report=message=>{by(by('ticket-dialog').open ? 'form-message' : 'message').textContent=message;}; const cell=(row,value)=>{const td=row.insertCell();td.textContent=value;return td;}; const addButton=(parent,label,action)=>{const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.addEventListener('click',action);parent.append(b);}; const normalize=value=>value.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,''); const csvExport=(filename,rows)=>{const escape=value=>{let text=String(value??'');if(/^[=+@\-\t\r\n]/.test(text.trimStart())||/^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';};const content=rows.map(row=>row.map(escape).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\uFEFF',content],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 
 const key = 'nathalia-chamados-v1';
-const statuses = ['Aberto', 'Em atendimento', 'Resolvido'];
+const statuses = ['Aberto', 'Em atendimento', 'Em espera', 'Resolvido'];
+const transitions = {
+  'Aberto': [['Atender', 'Em atendimento']],
+  'Em atendimento': [['Colocar em espera', 'Em espera'], ['Concluir', 'Resolvido']],
+  'Em espera': [['Atender', 'Em atendimento']],
+  'Resolvido': [['Reabrir', 'Aberto']]
+};
 const formatter = new Intl.DateTimeFormat('pt-BR', {dateStyle:'short', timeStyle:'short'});
 const form = by('entry');
 const dialog = by('ticket-dialog');
@@ -221,15 +229,18 @@ function render() {
     actions.className = 'actions';
     cell(row, '').append(actions);
     addButton(actions, 'Editar', () => openForm(ticket));
-    const next = statuses[(statuses.indexOf(ticket.status) + 1) % statuses.length];
-    const label = {'Aberto':'Reabrir','Em atendimento':'Iniciar','Resolvido':'Resolver'}[next];
-    addButton(actions,label,() => {
-      if (save(tickets.map(item => item.id === ticket.id ? {...item,status:next,updatedAt:new Date().toISOString()} : item))) {
-        const updated = rows.querySelector('[data-ticket-id="' + ticket.id + '"] .actions button:last-child');
-        (updated || by('status')).focus();
-        report('Chamado #' + ticket.id + ' atualizado.');
-      }
-    });
+    for (const [label, next] of transitions[ticket.status] ?? transitions.Aberto) {
+      addButton(actions, label, () => {
+        const changed = tickets.map(item => item.id === ticket.id
+          ? {...item, status: next, updatedAt: new Date().toISOString()}
+          : item);
+        if (save(changed)) {
+          const updated = rows.querySelector('[data-ticket-id="' + ticket.id + '"] .actions button:last-child');
+          (updated || by('status')).focus();
+          report('Chamado #' + ticket.id + ': ' + next + '.');
+        }
+      });
+    }
   }
   by('empty').hidden = visible.length > 0;
   by('empty').textContent = tickets.length ? 'Nenhum chamado corresponde aos filtros.' : 'Nenhum chamado cadastrado. Use Novo chamado para começar.';
