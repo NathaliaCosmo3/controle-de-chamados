@@ -1,16 +1,16 @@
 # Controle de chamados
 
-## Baixar e abrir no navegador
+## Abrir a versão visual
 
-**[Baixar projeto em ZIP](https://github.com/NathaliaCosmo3/controle-de-chamados/archive/refs/heads/main.zip)**
+1. Abra o [arquivo index.html](https://github.com/NathaliaCosmo3/controle-de-chamados/blob/main/index.html).
+2. Na barra acima do código, clique no ícone de download (**Download raw file**).
+3. Na pasta **Downloads**, abra `index.html` com dois cliques. Ele funciona offline no Chrome ou Edge, sem instalar Python.
 
-1. Extraia o ZIP. No Windows, clique com o botão direito no arquivo e escolha **Extrair Tudo**.
-2. Na pasta extraída, abra `index.html` com duplo clique. A interface funciona offline e dispensa instalação.
+**[Baixar todos os arquivos em ZIP](https://github.com/NathaliaCosmo3/controle-de-chamados/archive/refs/heads/main.zip)**
 
-Na interface, cadastre com prioridade, pesquise por título ou número, filtre por status e exporte a lista exibida em CSV. Os chamados ficam no navegador usado e podem ser reabertos. A versão visual tem armazenamento próprio e o programa Python usa o banco SQLite.
+Cadastre e edite chamados, acompanhe os indicadores de pendências e resoluções, altere o status e exporte a lista filtrada em CSV. Os chamados ficam no navegador usado.
 
 ## Versão em Python para terminal
-
 
 Projeto de portfólio inspirado na rotina de suporte técnico. Registra chamados com título e descrição, lista os registros e muda o status de Aberto para Resolvido. O SQLite mantém os dados entre execuções.
 
