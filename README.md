@@ -10,6 +10,16 @@
 
 Cadastre e edite chamados, acompanhe os indicadores de pendências e resoluções, altere o status e exporte a lista filtrada em CSV. Os chamados ficam no navegador usado.
 
+## Usar os três módulos juntos
+
+Abra o `index.html` do **Controle de Chamados**. Ele reúne Chamados, Inventário e Prazos em um só arquivo.
+
+- No formulário de chamado, selecione **Equipamento vinculado** para associar um patrimônio.
+- Em **Inventário**, use **Novo chamado** na linha do equipamento. Se houver registros vinculados, **Ver chamados** filtra a lista por aquele patrimônio.
+- Na linha de um chamado, clique em **Prazo**, informe os dias úteis e os feriados, clique em **Calcular** e depois em **Aplicar ao chamado**. O vencimento aparece na lista de chamados.
+
+Os registros ficam no armazenamento local do navegador. Abra as ferramentas pelo menu do painel para usar os vínculos entre elas.
+
 ## Versão em Python para terminal
 
 Projeto de portfólio inspirado na rotina de suporte técnico. Registra chamados com título e descrição, lista os registros e muda o status de Aberto para Resolvido. O SQLite mantém os dados entre execuções.
