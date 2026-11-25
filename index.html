@@ -229,13 +229,6 @@ function render() {
     actions.className = 'actions';
     cell(row, '').append(actions);
     addButton(actions, 'Editar', () => openForm(ticket));
-    addButton(actions, 'Excluir', () => {
-      if (!window.confirm('Excluir o chamado #' + ticket.id + ' — ' + ticket.title + '?')) return;
-      if (save(tickets.filter(item => item.id !== ticket.id))) {
-        by('search').focus();
-        report('Chamado #' + ticket.id + ' excluído.');
-      }
-    });
     for (const [label, next] of transitions[ticket.status] ?? transitions.Aberto) {
       addButton(actions, label, () => {
         const changed = tickets.map(item => item.id === ticket.id
@@ -248,6 +241,13 @@ function render() {
         }
       });
     }
+    addButton(actions, 'Excluir', () => {
+      if (!window.confirm('Excluir o chamado #' + ticket.id + ' — ' + ticket.title + '?')) return;
+      if (save(tickets.filter(item => item.id !== ticket.id))) {
+        by('search').focus();
+        report('Chamado #' + ticket.id + ' excluído.');
+      }
+    });
   }
   by('empty').hidden = visible.length > 0;
   by('empty').textContent = tickets.length ? 'Nenhum chamado corresponde aos filtros.' : 'Nenhum chamado cadastrado. Use Novo chamado para começar.';
